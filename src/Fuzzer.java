@@ -1,3 +1,5 @@
+import com.gargoylesoftware.htmlunit.WebClient;
+
 
 public class Fuzzer {
 
@@ -5,7 +7,10 @@ public class Fuzzer {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		WebClient webClient = new WebClient();
+		webClient.setJavaScriptEnabled(true);
+		discoverLinks(webClient);
+		webClient.closeAllWindows();
 
 	}
 
