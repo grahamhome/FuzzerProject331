@@ -171,20 +171,27 @@ public class Fuzzer {
 		}
 		List<HtmlAnchor> links = page.getAnchors();
 		List<HtmlAnchor> crawledLinks = new ArrayList<HtmlAnchor>();
-		for (HtmlAnchor link : links) {
-			System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
+	
+		for(int i = 0; i < links.size(); i++){
+			HtmlAnchor link = links.get(i);
+		
+			String url = "";
+			try {
+				url = HtmlAnchor.getTargetUrl(link.getHrefAttribute(), page).toString();
+			} catch (MalformedURLException e1) {
+				e1.printStackTrace();
+			}
+//						System.out.println("Link discovered: "+ url);
 			
 			try {
-				page = webClient.getPage(link.click().getWebResponse().getWebRequest());
+				page = webClient.getPage(url);
 			} catch (FailingHttpStatusCodeException | IOException e) {
 				e.printStackTrace();
 			}
-
+	
 			crawledLinks = page.getAnchors();
-			
 			for(HtmlAnchor ha : crawledLinks){
-				System.out.println("\tCrawled Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
-				if(!Fuzzer.containsLink(links, ha)){
+				if(!Fuzzer.containsLink(links, ha, page)){
 					links.add(ha);
 				}
 			}
@@ -193,14 +200,16 @@ public class Fuzzer {
 		return links;
 	}
 	
-	private static boolean containsLink(List<HtmlAnchor> anchors, HtmlAnchor link){
+	private static boolean containsLink(List<HtmlAnchor> anchors, HtmlAnchor link, HtmlPage page){
 		for(HtmlAnchor anchor : anchors){
-			if(link.asText().equals(anchor.asText())){
-				System.out.println("true");
-				return true;
+			try {
+				if(HtmlAnchor.getTargetUrl(link.getHrefAttribute(), page).toString().equals(HtmlAnchor.getTargetUrl(anchor.getHrefAttribute(), page).toString())){
+					return true;
+				}
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
 			}
 		}
-		System.out.println("false");
 		return false;
 	}
 	
