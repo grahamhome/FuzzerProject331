@@ -46,6 +46,9 @@ public class Fuzzer {
 					e.printStackTrace();
 				}
 				List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient);
+				
+				HashMap<String, List<HtmlInput>> inputs = Fuzzer.discoverFormInputs(webClient, links);
+				
 				//TODO
 				
 				webClient.closeAllWindows();
@@ -64,6 +67,42 @@ public class Fuzzer {
 			Fuzzer.usage();
 		}
 
+	}
+	
+	/**
+	 * 
+	 * @param webClient : a webClient object which has already been authenticated,
+	 * so that it can access all of the URLs specified in the 2nd parameter
+	 * @param links: a List of HtmlAnchors representing links into the system
+	 * 
+	 * @return: a HashMap of Strings representing URL's linked to Lists of FormInputs.
+	 */
+	private static HashMap<String, List<HtmlInput>> discoverFormInputs(WebClient webClient, List<HtmlAnchor> links) {
+		HashMap<String, List<HtmlInput>> inputs = new HashMap<String, List<HtmlInput>>();
+		HtmlPage page = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
+
+		for (HtmlAnchor a : links) {
+			try {
+				String url = HtmlAnchor.getTargetUrl(a.getHrefAttribute(), page).toString();
+				System.out.println(url);
+				page = webClient.getPage(url);
+				List<HtmlForm> forms = page.getForms();
+				if (forms.size() > 0) {
+					List<HtmlInput> fields = new ArrayList<HtmlInput>();
+					for (HtmlForm f : forms) {
+						fields.addAll(f.getInputsByValue("")); //Get the empty input fields
+					}
+					if (fields.size() > 0) {
+						inputs.put(url, fields);
+					}
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
+		return inputs;
 	}
 	
 	private static boolean authentication(WebClient webClient, String url){
