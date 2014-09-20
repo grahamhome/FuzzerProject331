@@ -71,7 +71,7 @@ public class Fuzzer {
 			return false;
 		}
 		
-		if (url.equals("127.0.0.1/dvwa/login.php")){
+		if (url.equals("http://127.0.0.1/dvwa/login.php")){
 			final HtmlForm form = page.getForms().get(0);
 		    final HtmlTextInput user = form.getInputByName("username");
 		    final HtmlTextInput pass = form.getInputByName("password");
@@ -87,7 +87,7 @@ public class Fuzzer {
 				return false;
 			}
 			
-		} else if(url.startsWith("127.0.0.1:8080/bodgeit/")){
+		} else if(url.startsWith("http://127.0.0.1:8080/bodgeit/")){
 			String email = "gmh5970@rit.edu";
 			String password = "password";
 			
