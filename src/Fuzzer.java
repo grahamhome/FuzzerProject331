@@ -15,6 +15,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
@@ -38,16 +39,19 @@ public class Fuzzer {
 			List<String> words = Fuzzer.getCommonWords(opts.get("commonWords"));
 
 			WebClient webClient = new WebClient();
-			System.out.println(authentication(webClient, url));
-			try {
-				webClient.getPage(url);
-			} catch (FailingHttpStatusCodeException | IOException e) {
-				e.printStackTrace();
+			if (authentication(webClient, url)){
+				try {
+					webClient.getPage(url);
+				} catch (FailingHttpStatusCodeException | IOException e) {
+					e.printStackTrace();
+				}
+				List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient);
+				//TODO
+				
+				webClient.closeAllWindows();
+			} else {
+				System.err.println("Authentification Failed!");
 			}
-			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient);
-			//TODO
-			
-			webClient.closeAllWindows();
 		}
 		else if(args[0].toLowerCase().equals("test")){
 			System.out.println("Part 2 of project");
@@ -74,26 +78,30 @@ public class Fuzzer {
 		if (url.equals("http://127.0.0.1/dvwa/login.php")){
 			final HtmlForm form = page.getForms().get(0);
 		    final HtmlTextInput user = form.getInputByName("username");
-		    final HtmlTextInput pass = form.getInputByName("password");
+		    final HtmlPasswordInput pass = form.getInputByName("password");
 		    
 		    user.setValueAttribute("admin");
 		    pass.setValueAttribute("password");
 		    
-		    final HtmlSubmitInput button = form.getInputByName("Login");
+		    final HtmlSubmitInput button = form.getInputByValue("Login");
 		    try {
 				button.click();
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;
 			}
-			
+		    if (!webClient.getCurrentWindow().getEnclosedPage()
+		    		.getUrl().toString().equals("http://127.0.0.1/dvwa/index.php")){
+		    	return false;
+		    } 
+		    
 		} else if(url.startsWith("http://127.0.0.1:8080/bodgeit/")){
 			String email = "gmh5970@rit.edu";
 			String password = "password";
 			
-			if (!url.equals("127.0.0.1:8080/bodgeit/register.jsp")){
+			if (!url.equals("http://127.0.0.1:8080/bodgeit/register.jsp")){
 				try {
-					page = webClient.getPage("127.0.0.1:8080/bodgeit/register.jsp");
+					page = webClient.getPage("http://127.0.0.1:8080/bodgeit/register.jsp");
 				} catch (Exception e) {
 					e.printStackTrace();
 					return false;
@@ -102,14 +110,14 @@ public class Fuzzer {
 			
 			final HtmlForm form = page.getForms().get(0);
 		    final HtmlTextInput user = form.getInputByName("username");
-		    final HtmlTextInput pass1 = form.getInputByName("password1");
-		    final HtmlTextInput pass2 = form.getInputByName("password2");	
+		    final HtmlPasswordInput pass1 = form.getInputByName("password1");
+		    final HtmlPasswordInput pass2 = form.getInputByName("password2");	
 		    
 		    user.setValueAttribute(email);
 		    pass1.setValueAttribute(password);
 		    pass2.setValueAttribute(password);
 		    
-		    final HtmlSubmitInput submitButton = form.getInputByName("submit");
+		    final HtmlSubmitInput submitButton = form.getInputByValue("Register");
 		    try {
 				submitButton.click();
 			} catch (IOException e) {
@@ -122,19 +130,19 @@ public class Fuzzer {
 		    	return true;
 		    } else { // registration fails due to user already existing
 		    	try {
-					page = webClient.getPage("127.0.0.1:8080/bodgeit/login.jsp");
+					page = webClient.getPage("http://127.0.0.1:8080/bodgeit/login.jsp");
 				} catch (Exception e) {
 					e.printStackTrace();
 					return false;
 				}
 				final HtmlForm form2 = page.getForms().get(0);
-			    final HtmlTextInput user3 = form.getInputByName("username");
-			    final HtmlTextInput pass3 = form.getInputByName("password2");	
+			    final HtmlTextInput user3 = form2.getInputByName("username");
+			    final HtmlPasswordInput pass3 = form2.getInputByName("password");	
 			    
-			    user.setValueAttribute(email);
+			    user3.setValueAttribute(email);
 			    pass3.setValueAttribute(password);
 			    
-			    final HtmlSubmitInput loginButton = form.getInputByName("Login");
+			    final HtmlSubmitInput loginButton = form2.getInputByValue("Login");
 			    try {
 					loginButton.click();
 				} catch (IOException e) {
