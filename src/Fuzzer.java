@@ -39,7 +39,12 @@ public class Fuzzer {
 
 			WebClient webClient = new WebClient();
 			System.out.println(authentication(webClient, url));
-			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,url);
+			try {
+				webClient.getPage(url);
+			} catch (FailingHttpStatusCodeException | IOException e) {
+				e.printStackTrace();
+			}
+			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient);
 			//TODO
 			
 			webClient.closeAllWindows();
@@ -148,19 +153,47 @@ public class Fuzzer {
 	 * This code is for showing how you can get all the links on a given page, and visit a given URL
 	 * @param webClient
 	 */
-	private static List<HtmlAnchor> discoverLinks(WebClient webClient,String url) {
+	private static List<HtmlAnchor> discoverLinks(WebClient webClient) {
 		HtmlPage page;
 		try {
-			page = webClient.getPage(url);
+			page = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Collections.<HtmlAnchor>emptyList();
 		}
 		List<HtmlAnchor> links = page.getAnchors();
+		List<HtmlAnchor> crawledLinks = new ArrayList<HtmlAnchor>();
 		for (HtmlAnchor link : links) {
 			System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
+			
+//			try {
+//				page = webClient.getPage(link.click().getWebResponse().getWebRequest());
+//			} catch (FailingHttpStatusCodeException | IOException e) {
+//				e.printStackTrace();
+//			}
+//
+//			crawledLinks = page.getAnchors();
+//			
+//			for(HtmlAnchor ha : crawledLinks){
+//				System.out.println("\tCrawled Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
+//				if(!Fuzzer.containsLink(links, ha)){
+//					links.add(ha);
+//				}
+//			}
 		}
+		
 		return links;
+	}
+	
+	private static boolean containsLink(List<HtmlAnchor> anchors, HtmlAnchor link){
+		for(HtmlAnchor anchor : anchors){
+			if(link.asText().equals(anchor.asText())){
+				System.out.println("true");
+				return true;
+			}
+		}
+		System.out.println("false");
+		return false;
 	}
 	
 	/**
