@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -196,6 +197,51 @@ public class Fuzzer {
 		return true;
 	}
 
+	/*
+	 * Parses the query portion of the given URL to find possible input parameters
+	 */
+	private static HashMap<String, String> parseURL(URL url){
+		HashMap<String, String> parameters = new HashMap<String, String>();
+
+		String query = url.getQuery();
+		String[] pairs = query.split("&");
+		
+		for (int i = 0; i < pairs.length; i++){
+			String[] split = pairs[i].split("=");
+			String key = split[0];
+			String value = split[1];
+			parameters.put(key, value);
+		}
+		return parameters;
+	}
+	
+	/*
+	 * Takes the list of all URLs to be parsed
+	 */
+	private static HashMap<HtmlAnchor, HashMap<String, String>>
+			parseURLs(WebClient webClient, List<HtmlAnchor> URLs){
+		
+		HashMap<HtmlAnchor, HashMap<String, String>> parameters =
+				new HashMap<HtmlAnchor, HashMap<String, String>>();
+		
+		HtmlPage page = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
+		
+		for(int i = 0; i < URLs.size(); i++){
+			HtmlAnchor tempAnchor = URLs.get(i);
+			try {
+				URL url = new URL(HtmlAnchor.getTargetUrl(tempAnchor.getHrefAttribute(), page).toString());
+				parameters.put(tempAnchor, parseURL(url));
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.err.println("Bad URL during parsing.");
+				return parameters;
+			}
+		}
+		
+		return parameters;
+	}
+	
 	/**
 	 * This code is for showing how you can get all the links on a given page, and visit a given URL
 	 * @param webClient
