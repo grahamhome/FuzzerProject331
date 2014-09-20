@@ -174,20 +174,20 @@ public class Fuzzer {
 		for (HtmlAnchor link : links) {
 			System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
 			
-//			try {
-//				page = webClient.getPage(link.click().getWebResponse().getWebRequest());
-//			} catch (FailingHttpStatusCodeException | IOException e) {
-//				e.printStackTrace();
-//			}
-//
-//			crawledLinks = page.getAnchors();
-//			
-//			for(HtmlAnchor ha : crawledLinks){
-//				System.out.println("\tCrawled Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
-//				if(!Fuzzer.containsLink(links, ha)){
-//					links.add(ha);
-//				}
-//			}
+			try {
+				page = webClient.getPage(link.click().getWebResponse().getWebRequest());
+			} catch (FailingHttpStatusCodeException | IOException e) {
+				e.printStackTrace();
+			}
+
+			crawledLinks = page.getAnchors();
+			
+			for(HtmlAnchor ha : crawledLinks){
+				System.out.println("\tCrawled Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
+				if(!Fuzzer.containsLink(links, ha)){
+					links.add(ha);
+				}
+			}
 		}
 		
 		return links;
