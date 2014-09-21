@@ -46,7 +46,7 @@ public class Fuzzer {
 				} catch (FailingHttpStatusCodeException | IOException e) {
 					e.printStackTrace();
 				}
-				List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient);
+				List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
 				
 				HashMap<String, List<HtmlInput>> inputs = Fuzzer.discoverFormInputs(webClient, links);
 				
@@ -246,7 +246,7 @@ public class Fuzzer {
 	 * This code is for showing how you can get all the links on a given page, and visit a given URL
 	 * @param webClient
 	 */
-	private static List<HtmlAnchor> discoverLinks(WebClient webClient) {
+	private static List<HtmlAnchor> discoverLinks(WebClient webClient, List<String> words) {
 		HtmlPage page;
 		try {
 			page = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
@@ -266,7 +266,7 @@ public class Fuzzer {
 			} catch (MalformedURLException e1) {
 				e1.printStackTrace();
 			}
-//						System.out.println("Link discovered: "+ url);
+//			System.out.println("Link discovered: "+ url);
 			
 			try {
 				page = webClient.getPage(url);
@@ -275,6 +275,7 @@ public class Fuzzer {
 			}
 	
 			crawledLinks = page.getAnchors();
+			crawledLinks.addAll(guessPages(webClient, link, words));
 			for(HtmlAnchor ha : crawledLinks){
 				if(!Fuzzer.containsLink(links, ha, page)){
 					links.add(ha);
@@ -283,6 +284,35 @@ public class Fuzzer {
 		}
 		
 		return links;
+	}
+	
+	private static List<HtmlAnchor> guessPages(WebClient webClient, HtmlAnchor link, List<String> words){
+		HtmlPage page = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
+		
+		List<HtmlAnchor> anchors = new ArrayList<HtmlAnchor>();
+		
+		String[] extensions = {".jsp",".php"};
+		
+		String url = "";
+		try {
+			url = HtmlAnchor.getTargetUrl(link.getHrefAttribute(), page).toString();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		
+		for(String word : words){
+			for(int i = 0; i < extensions.length; i++){
+				try {
+					page = webClient.getPage(url + "/" + word + extensions[i]);
+					anchors.addAll(page.getAnchors());
+				} catch (FailingHttpStatusCodeException
+						| IOException e) {
+				}				
+			}
+			
+		}
+		
+		return anchors;
 	}
 	
 	private static boolean containsLink(List<HtmlAnchor> anchors, HtmlAnchor link, HtmlPage page){
