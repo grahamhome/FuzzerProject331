@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -49,6 +50,9 @@ public class Fuzzer {
 				List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
 				
 				HashMap<String, List<HtmlInput>> inputs = Fuzzer.discoverFormInputs(webClient, links);
+				for (Map.Entry<String, List<HtmlInput>> e : inputs.entrySet()) {
+					System.out.println(e.getKey() + ": " + e.getValue());
+				}
 				
 				//TODO
 				
@@ -85,13 +89,13 @@ public class Fuzzer {
 		for (HtmlAnchor a : links) {
 			try {
 				String url = HtmlAnchor.getTargetUrl(a.getHrefAttribute(), page).toString();
-				System.out.println(url);
 				page = webClient.getPage(url);
 				List<HtmlForm> forms = page.getForms();
 				if (forms.size() > 0) {
 					List<HtmlInput> fields = new ArrayList<HtmlInput>();
 					for (HtmlForm f : forms) {
 						fields.addAll(f.getInputsByValue("")); //Get the empty input fields
+						fields.addAll(f.getInputsByValue("1")); //Get the other input fields
 					}
 					if (fields.size() > 0) {
 						inputs.put(url, fields);
