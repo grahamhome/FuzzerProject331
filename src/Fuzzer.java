@@ -14,12 +14,14 @@ import java.util.Map;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
+import com.gargoylesoftware.htmlunit.util.Cookie;
 
 public class Fuzzer {
 
@@ -41,16 +43,22 @@ public class Fuzzer {
 			List<String> words = Fuzzer.getCommonWords(opts.get("commonWords"));
 
 			WebClient webClient = new WebClient();
+			
+			
 			if (authentication(webClient, url)){
 				try {
 					webClient.getPage(url);
 				} catch (FailingHttpStatusCodeException | IOException e) {
 					e.printStackTrace();
 				}
+				
+				ArrayList<Cookie> cookies = getCookies(webClient);
+				System.out.println(cookies);
+				
 				List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
 				
-				HashMap<String, List<HtmlInput>> inputs = Fuzzer.discoverFormInputs(webClient, links);
-				for (Map.Entry<String, List<HtmlInput>> e : inputs.entrySet()) {
+				HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
+				for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
 					System.out.println(e.getKey() + ": " + e.getValue());
 				}
 				
@@ -75,15 +83,28 @@ public class Fuzzer {
 	}
 	
 	/**
+	 * Discovers and returns the cookies used by a particular webpage.
+	 * @param webClient : a webClient which has already been authenticated
 	 * 
+	 * @return : returns a list of cookies.
+	 */
+	
+	private static ArrayList<Cookie> getCookies(WebClient webClient) {
+		ArrayList<Cookie> cookies = new ArrayList<Cookie>();
+		cookies.addAll(webClient.getCookies(webClient.getCurrentWindow().getEnclosedPage().getUrl()));
+		return cookies;
+	}
+	
+	/**
+	 * Discovers and returns a complete list of HTML inputs such as text entry fields.
 	 * @param webClient : a webClient object which has already been authenticated,
 	 * so that it can access all of the URLs specified in the 2nd parameter
 	 * @param links: a List of HtmlAnchors representing links into the system
 	 * 
 	 * @return: a HashMap of Strings representing URL's linked to Lists of FormInputs.
 	 */
-	private static HashMap<String, List<HtmlInput>> discoverFormInputs(WebClient webClient, List<HtmlAnchor> links) {
-		HashMap<String, List<HtmlInput>> inputs = new HashMap<String, List<HtmlInput>>();
+	private static HashMap<String, List<HtmlElement>> discoverFormInputs(WebClient webClient, List<HtmlAnchor> links) {
+		HashMap<String, List<HtmlElement>> inputs = new HashMap<String, List<HtmlElement>>();
 		HtmlPage page = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
 
 		for (HtmlAnchor a : links) {
@@ -92,10 +113,9 @@ public class Fuzzer {
 				page = webClient.getPage(url);
 				List<HtmlForm> forms = page.getForms();
 				if (forms.size() > 0) {
-					List<HtmlInput> fields = new ArrayList<HtmlInput>();
+					List<HtmlElement> fields = new ArrayList<HtmlElement>();
 					for (HtmlForm f : forms) {
-						fields.addAll(f.getInputsByValue("")); //Get the empty input fields
-						fields.addAll(f.getInputsByValue("1")); //Get the other input fields
+						fields.addAll(f.getElementsByTagName("input"));
 					}
 					if (fields.size() > 0) {
 						inputs.put(url, fields);
