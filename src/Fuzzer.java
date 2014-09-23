@@ -64,6 +64,8 @@ public class Fuzzer {
 			for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
 				System.out.println(e.getKey() + ": " + e.getValue());
 			}
+			
+			System.out.println(displayParams(parseURLs(webClient, links)));
 				
 			webClient.closeAllWindows();
 		}
