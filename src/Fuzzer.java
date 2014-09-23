@@ -43,28 +43,29 @@ public class Fuzzer {
 			List<String> words = Fuzzer.getCommonWords(opts.get("commonWords"));
 
 			WebClient webClient = new WebClient();
-			if (authentication(webClient, url)){
-				try {
-					webClient.getPage(url);
-				} catch (FailingHttpStatusCodeException | IOException e) {
-					e.printStackTrace();
-				}
-				
-				
-				System.out.println(getCookies(webClient));
-				List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
-				
-				HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
-				for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
-					System.out.println(e.getKey() + ": " + e.getValue());
-				}
-				
-				//TODO
-				
-				webClient.closeAllWindows();
-			} else {
-				System.err.println("Authentification Failed!");
+			
+			
+			try {	
+				webClient.getPage(url);
+			} catch (FailingHttpStatusCodeException | IOException e) {
+				e.printStackTrace();
 			}
+			
+			//Discovery Steps:
+			
+			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
+			
+			System.out.println("Authenticated: " + authentication(webClient, url, opts));
+			
+			System.out.println("Cookies: " + getCookies(webClient));
+				
+			HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
+			System.out.println("Form Inputs: ");
+			for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
+				System.out.println(e.getKey() + ": " + e.getValue());
+			}
+				
+			webClient.closeAllWindows();
 		}
 		else if(args[0].toLowerCase().equals("test")){
 			System.out.println("Part 2 of project");
@@ -127,7 +128,7 @@ public class Fuzzer {
 		return inputs;
 	}
 	
-	private static boolean authentication(WebClient webClient, String url){
+	private static boolean authentication(WebClient webClient, String url, HashMap<String, String> opts){
 		HtmlPage page;
 		try {
 			page = webClient.getPage(url);
@@ -135,7 +136,9 @@ public class Fuzzer {
 			e.printStackTrace();
 			return false;
 		}
-		
+		if (! opts.containsKey("customAuth")) {
+			return false;
+		}
 		if (url.equals("http://127.0.0.1/dvwa/login.php")){
 			final HtmlForm form = page.getForms().get(0);
 		    final HtmlTextInput user = form.getInputByName("username");
@@ -261,6 +264,22 @@ public class Fuzzer {
 		}
 		
 		return parameters;
+	}
+	
+	private static String displayParams(HashMap<HtmlAnchor, HashMap<String, String>> params){
+		String result = "Discovered HTML Parameters:" + '\n';
+		for (Map.Entry<HtmlAnchor, HashMap<String, String>> entry: params.entrySet()){
+			String temp = entry.getKey().toString();
+			temp = temp + " || ";
+			HashMap <String, String> workingMap = entry.getValue();
+			for (Map.Entry<String, String> values : workingMap.entrySet()){
+				temp = temp + "(" + values.getKey() + " = " + values.getValue() + ") ";
+			}
+			temp = temp + " ";
+			result = result + temp;
+		}
+		
+		return result;
 	}
 	
 	/**
