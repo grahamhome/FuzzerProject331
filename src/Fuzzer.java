@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -31,6 +32,7 @@ public class Fuzzer {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF); 
 		if(args.length < 3){
 			Fuzzer.usage();
 		}
