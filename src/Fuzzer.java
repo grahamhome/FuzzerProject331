@@ -303,7 +303,6 @@ public class Fuzzer {
 			URL url = new URL(HtmlAnchor.getTargetUrl(anchor.getHrefAttribute(), page).toString());
 			result = url.toString();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
