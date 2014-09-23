@@ -53,9 +53,9 @@ public class Fuzzer {
 			
 			//Discovery Steps:
 			
-			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
-			
 			System.out.println("Authenticated: " + authentication(webClient, url, opts));
+			
+			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
 			
 			System.out.println("Cookies: " + getCookies(webClient));
 				
@@ -65,8 +65,8 @@ public class Fuzzer {
 				System.out.println(e.getKey() + ": " + e.getValue());
 			}
 			
-			System.out.println(displayParams(parseURLs(webClient, links)));
-				
+			System.out.println(displayParams(parseURLs(webClient, links), webClient));
+
 			webClient.closeAllWindows();
 		}
 		else if(args[0].toLowerCase().equals("test")){
@@ -103,7 +103,7 @@ public class Fuzzer {
 	 * 
 	 * @return: a HashMap of Strings representing URL's linked to Lists of FormInputs.
 	 */
-	private static HashMap<String, List<HtmlElement>> discoverFormInputs(WebClient webClient, List<HtmlAnchor> links) {
+	private static HashMap<String, List<HtmlElement>> discoverFormInputs(WebClient webClient, List<HtmlAnchor> links){
 		HashMap<String, List<HtmlElement>> inputs = new HashMap<String, List<HtmlElement>>();
 		HtmlPage page = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
 
@@ -230,13 +230,15 @@ public class Fuzzer {
 		HashMap<String, String> parameters = new HashMap<String, String>();
 
 		String query = url.getQuery();
-		String[] pairs = query.split("&");
-		
-		for (int i = 0; i < pairs.length; i++){
-			String[] split = pairs[i].split("=");
-			String key = split[0];
-			String value = split[1];
-			parameters.put(key, value);
+		if (query != null){
+			String[] pairs = query.split("&");
+			
+			for (int i = 0; i < pairs.length; i++){
+				String[] split = pairs[i].split("=");
+				String key = split[0];
+				String value = split[1];
+				parameters.put(key, value);
+			}
 		}
 		return parameters;
 	}
@@ -268,22 +270,42 @@ public class Fuzzer {
 		return parameters;
 	}
 	
-	private static String displayParams(HashMap<HtmlAnchor, HashMap<String, String>> params){
+	/*
+	 * Method to properly print the discovered url parameters. 
+	 */
+	private static String displayParams(HashMap<HtmlAnchor, HashMap<String, String>> params, WebClient webClient){
 		String result = "Discovered HTML Parameters:" + '\n';
-		for (Map.Entry<HtmlAnchor, HashMap<String, String>> entry: params.entrySet()){
-			String temp = entry.getKey().toString();
+		for (Map.Entry<HtmlAnchor, HashMap<String, String>> entry: params.entrySet()){			
+			String temp = displayAnchor(entry.getKey());
 			temp = temp + " || ";
 			HashMap <String, String> workingMap = entry.getValue();
 			for (Map.Entry<String, String> values : workingMap.entrySet()){
 				temp = temp + "(" + values.getKey() + " = " + values.getValue() + ") ";
 			}
-			temp = temp + " ";
+			temp = temp + '\n';
 			result = result + temp;
 		}
 		
 		return result;
 	}
 	
+	/*
+	 * Pretty toString method for HtmlAnchors
+	 */
+	private static String displayAnchor(HtmlAnchor anchor) {
+		String result = "";
+		HtmlPage page = anchor.getHtmlPageOrNull();
+		try {
+			URL url = new URL(HtmlAnchor.getTargetUrl(anchor.getHrefAttribute(), page).toString());
+			result = url.toString();
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+
 	/**
 	 * This code is for showing how you can get all the links on a given page, and visit a given URL
 	 * @param webClient
@@ -308,7 +330,7 @@ public class Fuzzer {
 			} catch (MalformedURLException e1) {
 				e1.printStackTrace();
 			}
-//			System.out.println("Link discovered: "+ url);
+			System.out.println("Link discovered: "+ url);
 			
 			try {
 				page = webClient.getPage(url);
