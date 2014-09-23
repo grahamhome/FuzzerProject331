@@ -246,6 +246,22 @@ public class Fuzzer {
 		return parameters;
 	}
 	
+	private static String displayParams(HashMap<HtmlAnchor, HashMap<String, String>> params){
+		String result = "Discovered HTML Parameters:" + '\n';
+		for (Map.Entry<HtmlAnchor, HashMap<String, String>> entry: params.entrySet()){
+			String temp = entry.getKey().toString();
+			temp = temp + " || ";
+			HashMap <String, String> workingMap = entry.getValue();
+			for (Map.Entry<String, String> values : workingMap.entrySet()){
+				temp = temp + "(" + values.getKey() + " = " + values.getValue() + ") ";
+			}
+			temp = temp + " ";
+			result = result + temp;
+		}
+		
+		return result;
+	}
+	
 	/**
 	 * This code is for showing how you can get all the links on a given page, and visit a given URL
 	 * @param webClient
