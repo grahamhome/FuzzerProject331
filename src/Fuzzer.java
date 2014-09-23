@@ -57,17 +57,17 @@ public class Fuzzer {
 			
 			//Discovery Steps:
 			
-			System.out.println("Authenticated: " + authentication(webClient, url, opts));
+			System.out.println("Authenticated: " + authentication(webClient, url, opts) + '\n');
 			
 			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
 			
-			System.out.println("Cookies: " + getCookies(webClient));
+			System.out.println('\n' + "Cookies: " + getCookies(webClient));
 				
-			HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
-			System.out.println("Form Inputs: ");
-			for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
-				System.out.println(e.getKey() + ": " + e.getValue());
-			}
+			//HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
+			System.out.println('\n' + "Form Inputs: ");
+			//for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
+			//	System.out.println(e.getKey() + ": " + e.getValue());
+			//}
 			
 			System.out.println(displayParams(parseURLs(webClient, links), webClient));
 
@@ -278,13 +278,18 @@ public class Fuzzer {
 	 * Method to properly print the discovered url parameters. 
 	 */
 	private static String displayParams(HashMap<HtmlAnchor, HashMap<String, String>> params, WebClient webClient){
-		String result = "Discovered HTML Parameters:" + '\n';
+		String result = '\n' + "Discovered HTML Parameters:" + '\n';
 		for (Map.Entry<HtmlAnchor, HashMap<String, String>> entry: params.entrySet()){			
 			String temp = displayAnchor(entry.getKey());
 			temp = temp + " || ";
 			HashMap <String, String> workingMap = entry.getValue();
+			int i = 0;
 			for (Map.Entry<String, String> values : workingMap.entrySet()){
 				temp = temp + "(" + values.getKey() + " = " + values.getValue() + ") ";
+				i++;
+			}
+			if (i == 0){
+				continue;
 			}
 			temp = temp + '\n';
 			result = result + temp;
