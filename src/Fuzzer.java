@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
+
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
@@ -337,7 +339,7 @@ public class Fuzzer {
 		
 		String url = "";
 		try {
-			url = HtmlAnchor.getTargetUrl(link.getHrefAttribute(), page).toString();
+			url = FilenameUtils.removeExtension(HtmlAnchor.getTargetUrl(link.getHrefAttribute(), page).toString());
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -347,8 +349,7 @@ public class Fuzzer {
 				try {
 					page = webClient.getPage(url + "/" + word + extensions[i]);
 					anchors.addAll(page.getAnchors());
-				} catch (FailingHttpStatusCodeException
-						| IOException e) {
+				} catch (Exception e) {
 				}				
 			}
 			
