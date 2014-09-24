@@ -343,7 +343,6 @@ public class Fuzzer {
 			try {
 				page = webClient.getPage(url);
 			} catch (FailingHttpStatusCodeException | IOException e) {
-				e.printStackTrace();
 			}
 	
 			crawledLinks = page.getAnchors();
