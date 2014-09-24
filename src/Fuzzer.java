@@ -60,16 +60,16 @@ public class Fuzzer {
 			System.out.println("Authenticated: " + authentication(webClient, url, opts) + '\n');
 			
 			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
-			
-			System.out.println('\n' + "Cookies: " + getCookies(webClient));
 				
-			//HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
+			HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
 			System.out.println('\n' + "Form Inputs: ");
-			//for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
-			//	System.out.println(e.getKey() + ": " + e.getValue());
-			//}
+			for (Map.Entry<String, List<HtmlElement>> e : inputs.entrySet()) {
+				System.out.println(e.getKey() + ": " + e.getValue());
+			}
 			
 			System.out.println(displayParams(parseURLs(webClient, links), webClient));
+			
+			System.out.println('\n' + "Cookies: " + getCookies(webClient));
 
 			webClient.closeAllWindows();
 		}
@@ -127,7 +127,7 @@ public class Fuzzer {
 				}
 				
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 			
 		}
@@ -234,7 +234,7 @@ public class Fuzzer {
 		HashMap<String, String> parameters = new HashMap<String, String>();
 
 		String query = url.getQuery();
-		if (query != null){
+		if (query != null && query.indexOf("=") != -1){
 			String[] pairs = query.split("&");
 			
 			for (int i = 0; i < pairs.length; i++){
@@ -328,6 +328,7 @@ public class Fuzzer {
 		}
 		List<HtmlAnchor> links = page.getAnchors();
 		List<HtmlAnchor> crawledLinks = new ArrayList<HtmlAnchor>();
+		URL pageUrl = page.getUrl();
 	
 		for(int i = 0; i < links.size(); i++){
 			HtmlAnchor link = links.get(i);
@@ -338,18 +339,20 @@ public class Fuzzer {
 			} catch (MalformedURLException e1) {
 				e1.printStackTrace();
 			}
-			System.out.println("Link discovered: "+ url);
-			
-			try {
-				page = webClient.getPage(url);
-			} catch (FailingHttpStatusCodeException | IOException e) {
-			}
-	
-			crawledLinks = page.getAnchors();
-			crawledLinks.addAll(guessPages(webClient, link, words));
-			for(HtmlAnchor ha : crawledLinks){
-				if(!Fuzzer.containsLink(links, ha, page)){
-					links.add(ha);
+			if (url.startsWith("http://" + pageUrl.getHost())){
+				System.out.println("Link discovered: "+ url);
+				
+				try {
+					page = webClient.getPage(url);
+				} catch (FailingHttpStatusCodeException | IOException e) {
+				}
+		
+				crawledLinks = page.getAnchors();
+				crawledLinks.addAll(guessPages(webClient, link, words));
+				for(HtmlAnchor ha : crawledLinks){
+					if(!Fuzzer.containsLink(links, ha, page)){
+						links.add(ha);
+					}
 				}
 			}
 		}
