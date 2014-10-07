@@ -80,6 +80,8 @@ public class Fuzzer {
 					|| opts.get("commonWords") == null){
 				Fuzzer.usage();
 			}
+			List<String> vectors = Fuzzer.getVectors(opts.get("vector"));
+			List<String> sensitiveWords = Fuzzer.getSensitiveWords(opts.get("sensitive"));
 		}else{
 			Fuzzer.usage();
 		}
@@ -471,6 +473,72 @@ public class Fuzzer {
 		}
 		//System.out.println(words);
 		return words;
+	}
+	
+	/**
+	 * Reads a file for the vectors
+	 * @param path
+	 * @return list of vector strings
+	 */
+	private static List<String> getVectors(String path){
+		File vectorsFile = new File(path);
+		List<String> vectors = new ArrayList<String>();
+		BufferedReader reader = null;
+
+		try {
+		    reader = new BufferedReader(new FileReader(vectorsFile));
+		    String line = null;
+
+		    while ((line = reader.readLine()) != null) {
+		        vectors.add(line);
+		    }
+		} catch (FileNotFoundException e) {
+		    e.printStackTrace();
+		} catch (IOException e) {
+		    e.printStackTrace();
+		} finally {
+			    try {
+			        if (reader != null) {
+			            reader.close();
+			        }
+			    } catch (IOException e) {
+		    }
+		}
+		//System.out.println(vectors);
+		return vectors;
+	}
+	
+	/**
+	 * Reads a file for the sensitive words
+	 * @param path
+	 * @return list of sensitive words
+	 */
+	private static List<String> getSensitiveWords(String path){
+		File sensitiveFile = new File(path);
+		List<String> sensitive = new ArrayList<String>();
+		BufferedReader reader = null;
+
+		try {
+		    reader = new BufferedReader(new FileReader(sensitiveFile));
+		    String line = null;
+
+		    while ((line = reader.readLine()) != null) {
+		        sensitive.add(line);
+		    }
+		} catch (FileNotFoundException e) {
+		    e.printStackTrace();
+		} catch (IOException e) {
+		    e.printStackTrace();
+		} finally {
+			    try {
+			        if (reader != null) {
+			            reader.close();
+			        }
+			    } catch (IOException e) {
+		    }
+		}
+		//System.out.println(sensitive);
+		return sensitive;
 	}
 	
 	/**

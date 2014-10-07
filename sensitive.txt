@@ -1,0 +1,8 @@
+mySQL
+apache
+tomcat
+password
+administrator
+credit card
+creditcard
+ssn
