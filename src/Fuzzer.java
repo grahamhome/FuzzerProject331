@@ -31,6 +31,9 @@ public class Fuzzer {
 	
 	// Default time for a response to be considered slow, in ms.
 	private static long slowResponse = 500;
+	
+	//Default for random input checking
+	private static boolean random = false;
 
 	/**
 	 * @param args
