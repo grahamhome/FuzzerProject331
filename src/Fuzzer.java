@@ -16,6 +16,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebResponse;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
@@ -27,6 +28,9 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.util.Cookie;
 
 public class Fuzzer {
+	
+	// Default time for a response to be considered slow, in ms.
+	private static long slowResponse = 500;
 
 	/**
 	 * @param args
@@ -539,6 +543,27 @@ public class Fuzzer {
 		}
 		//System.out.println(sensitive);
 		return sensitive;
+	}
+	
+	/*
+	 *  Tests if a given WebResponse gave back an "OK" status code
+	 */
+	private static boolean responseStatusOK(WebResponse response){
+		if (response.getStatusCode() == 200){
+			return true;
+		}
+		return false;
+	}
+	
+	/*
+	 *  Tests to see if a given WebResponse took too long to
+	 *  come back (default = more than 500 milliseconds).
+	 */
+	private static boolean webResponseSlow(WebResponse response){
+		if(response.getLoadTime() >= slowResponse){
+			return true;
+		}
+		return false;
 	}
 	
 	/**
