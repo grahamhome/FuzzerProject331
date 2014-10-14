@@ -27,6 +27,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.util.Cookie;
+import com.gargoylesoftware.htmlunit.util.NameValuePair;
 
 public class Fuzzer {
 	
@@ -119,6 +120,7 @@ public class Fuzzer {
 								webResponseSensitiveOK(res,sensitiveWords);
 								webResponseSlow(res);
 								responseStatusOK(res);
+								webResponseSanitizeOK(res);
 								System.out.println();
 							} catch (IOException e1) {
 								
@@ -622,6 +624,24 @@ public class Fuzzer {
 			}
 		}
 		System.out.print(" Sensitive:OK");
+		return true;
+	}
+	
+	/*
+	 * Tests to see if input was sanitized
+	 */
+	private static boolean webResponseSanitizeOK(WebResponse response){
+		String[] checkFor = {"\"","\'","\\","<",">",};
+		
+		for(NameValuePair head : response.getResponseHeaders()){
+			for(int i = 0; i < checkFor.length; i++){
+				if(head.getValue().contains(checkFor[i])){
+					System.out.print(" Sanitize:ERROR");
+					return false;
+				}
+			}
+		}
+		System.out.print(" Sanitize:OK");
 		return true;
 	}
 	
