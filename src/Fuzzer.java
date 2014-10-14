@@ -16,6 +16,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.WebResponse;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -45,6 +46,8 @@ public class Fuzzer {
 		}
 		String url = args[1];
 		HashMap<String,String> opts = options(args);
+		slowResponse = Integer.parseInt(opts.get("slow"));
+		random = opts.get("random").toLowerCase().equals("true");
 		
 		if(args[0].toLowerCase().equals("discover")){
 			if(opts.get("commonWords") == null){
@@ -81,14 +84,49 @@ public class Fuzzer {
 			webClient.closeAllWindows();
 		}
 		else if(args[0].toLowerCase().equals("test")){
-			System.out.println("Part 2 of project");
-			if(opts.get("vector") == null
+			if(opts.get("vectors") == null
 					|| opts.get("sensitive") == null
 					|| opts.get("commonWords") == null){
 				Fuzzer.usage();
 			}
-			List<String> vectors = Fuzzer.getVectors(opts.get("vector"));
+			List<String> words = Fuzzer.getCommonWords(opts.get("commonWords"));
+			List<String> vectors = Fuzzer.getVectors(opts.get("vectors"));
 			List<String> sensitiveWords = Fuzzer.getSensitiveWords(opts.get("sensitive"));
+
+			WebClient webClient = new WebClient();
+			try {	
+				webClient.getPage(url);
+			} catch (FailingHttpStatusCodeException | IOException e) {
+				e.printStackTrace();
+			}
+			
+			System.out.println("Authenticated: " + authentication(webClient, url, opts) + '\n');
+			
+			List<HtmlAnchor> links = Fuzzer.discoverLinks(webClient,words);
+			HashMap<String, List<HtmlElement>> inputs = Fuzzer.discoverFormInputs(webClient, links);
+			
+			int index = (int) (Math.random() * inputs.size());
+			int i = 0;
+			for(String key : inputs.keySet()){
+				i++;
+				if(!random || i == index){
+					for(HtmlElement e : inputs.get(key)){
+						for(String vector : vectors){
+							try {
+								//Send the request with the vector
+								WebResponse res = webClient.loadWebResponse(new WebRequest(new URL(key+e.getId()+'='+vector)));
+								System.out.print("Request: \""+key+e.getId()+'='+vector+"\"");
+								webResponseSensitiveOK(res,sensitiveWords);
+								webResponseSlow(res);
+								responseStatusOK(res);
+								System.out.println();
+							} catch (IOException e1) {
+								
+							}
+						}
+					}						
+				}
+			}
 		}else{
 			Fuzzer.usage();
 		}
@@ -349,7 +387,7 @@ public class Fuzzer {
 				e1.printStackTrace();
 			}
 			if (url.startsWith("http://" + pageUrl.getHost())){
-				System.out.println("Link discovered: "+ url);
+				//System.out.println("Link discovered: "+ url);
 				
 				try {
 					page = webClient.getPage(url);
@@ -553,8 +591,10 @@ public class Fuzzer {
 	 */
 	private static boolean responseStatusOK(WebResponse response){
 		if (response.getStatusCode() == 200){
+			System.out.print(" Status:OK");
 			return true;
 		}
+		System.out.print(" Status:ERROR");
 		return false;
 	}
 	
@@ -564,9 +604,25 @@ public class Fuzzer {
 	 */
 	private static boolean webResponseSlow(WebResponse response){
 		if(response.getLoadTime() >= slowResponse){
+			System.out.print(" Speed:ERROR");
 			return true;
 		}
+		System.out.print(" Speed:OK");
 		return false;
+	}
+	
+	/*
+	 * Tests to see if given WebResponse contains sensitive words
+	 */
+	private static boolean webResponseSensitiveOK(WebResponse response, List<String> sensitive){
+		for(String word : sensitive){
+			if(response.getContentAsString().contains(word)){
+				System.out.print(" Sensitive:ERROR");
+				return false;
+			}
+		}
+		System.out.print(" Sensitive:OK");
+		return true;
 	}
 	
 	/**
